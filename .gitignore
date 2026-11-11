@@ -1,0 +1,11 @@
+# Visual Studio / build
+.vs/
+bin/
+build/
+x64/
+*.user
+# dane: w repo tylko jeden przykładowy graf
+data/*
+!data/web-Google.txt
+# wyniki testów
+out/
