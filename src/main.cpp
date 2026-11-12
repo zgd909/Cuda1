@@ -1,5 +1,3 @@
-// main.cpp - punkt wejścia programu: obsługa parametrów, pomiar czasów, zapis wyniku.
-//
 // Wywołanie:  bfs format method source target input_file output_file
 #include "common.h"
 #include "graph.h"

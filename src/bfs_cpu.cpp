@@ -1,5 +1,6 @@
 #include "common.h"
 #include "bfs_cpu.h"
+#include <queue>
 
 int build_path_from_parents(const uint32_t *parent, uint32_t source, uint32_t target, Path *path)
 {
@@ -32,40 +33,43 @@ int bfs_cpu(const Graph *g, uint32_t source, uint32_t target, Path *path)
 
     uint32_t n = g->num_vertices;
     uint32_t *parent = (uint32_t *)malloc((size_t)n * sizeof(uint32_t));
-    uint32_t *queue = (uint32_t *)malloc((size_t)n * sizeof(uint32_t));
-    if (!parent || !queue) {
+    if (!parent) {
         printf("Error: out of memory (CPU BFS)\n");
-        free(parent);
-        free(queue);
         return -1;
     }
     for (uint32_t v = 0; v < n; v++)
         parent[v] = NO_VERTEX;
 
-    // Każdy wierzchołek trafia do kolejki co najwyżej raz, więc tablica rozmiaru n wystarcza.
-    uint32_t head = 0, tail = 0;
     parent[source] = source;
-    queue[tail++] = source;
     int found = (source == target);
 
-    while (head < tail && !found) {
-        uint32_t u = queue[head++];
-        for (uint32_t e = g->row_offsets[u]; e < g->row_offsets[u + 1]; e++) {
-            uint32_t v = g->col_indices[e];
-            if (parent[v] == NO_VERTEX) {
-                parent[v] = u;
-                if (v == target) { 
-                    found = 1;
-                    break;
+    try { // push przy braku pamięci rzuca std::bad_alloc
+        std::queue<uint32_t> queue;
+        queue.push(source);
+
+        while (!queue.empty() && !found) {
+            uint32_t u = queue.front();
+            queue.pop();
+            for (uint32_t e = g->row_offsets[u]; e < g->row_offsets[u + 1]; e++) {
+                uint32_t v = g->col_indices[e];
+                if (parent[v] == NO_VERTEX) {
+                    parent[v] = u;
+                    if (v == target) {
+                        found = 1;
+                        break;
+                    }
+                    queue.push(v);
                 }
-                queue[tail++] = v;
             }
         }
+    } catch (const std::bad_alloc &) {
+        printf("Error: out of memory (CPU BFS queue)\n");
+        free(parent);
+        return -1;
     }
 
     int status = build_path_from_parents(parent, source, target, path);
     free(parent);
-    free(queue);
     return status;
 }
 
